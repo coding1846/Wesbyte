@@ -1,0 +1,717 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0b1016">
+  <title>Band Stuff</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: Inter, "Segoe UI", system-ui, sans-serif;
+      background: #0b1016;
+      color: #eef4f3;
+      font-synthesis: none;
+      text-rendering: optimizeLegibility;
+      --muted: #91a19f;
+      --line: #29363b;
+      --mint: #79e1bd;
+      --amber: #f3c477;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      min-width: 320px;
+      min-height: 100vh;
+      margin: 0;
+      display: grid;
+      place-items: center;
+      padding: 28px 16px;
+      background:
+        radial-gradient(ellipse at 50% 0%, rgba(84, 150, 128, .15), transparent 48%),
+        #0b1016;
+    }
+
+    button, input, select { font: inherit; }
+
+    main { width: min(100%, 660px); }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .brand { display: flex; align-items: center; gap: 12px; }
+
+    .brand-mark {
+      width: 42px;
+      height: 42px;
+      display: grid;
+      place-items: center;
+      border: 1px solid rgba(121, 225, 189, .3);
+      border-radius: 13px;
+      background: rgba(121, 225, 189, .1);
+      color: var(--mint);
+      font-size: 22px;
+    }
+
+    h1 { margin: 0; font-size: 1rem; letter-spacing: .14em; }
+    .tagline { margin: 4px 0 0; color: var(--muted); font-size: .76rem; }
+
+    .mic-state {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 11px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      color: var(--muted);
+      font-size: .68rem;
+      font-weight: 750;
+      letter-spacing: .1em;
+      white-space: nowrap;
+    }
+
+    .dot { width: 7px; height: 7px; border-radius: 50%; background: #66747a; }
+    .mic-state.on { border-color: rgba(121, 225, 189, .32); color: var(--mint); }
+    .mic-state.on .dot { background: var(--mint); box-shadow: 0 0 10px var(--mint); }
+
+    .tuner {
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      background: linear-gradient(155deg, #17212a, #111820 76%);
+      box-shadow: 0 24px 80px rgba(0, 0, 0, .35);
+    }
+
+    .readout { padding: 30px 26px 26px; text-align: center; }
+    .overline { margin: 0; color: var(--muted); font-size: .69rem; font-weight: 750; letter-spacing: .17em; text-transform: uppercase; }
+
+    .note {
+      min-height: 126px;
+      margin: 5px 0 0;
+      font-size: clamp(5.5rem, 23vw, 8rem);
+      font-weight: 650;
+      line-height: 1.18;
+      letter-spacing: -.075em;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .note sup { position: relative; top: -.1em; margin-left: 5px; color: var(--muted); font-size: .29em; letter-spacing: 0; }
+    .frequency { min-height: 25px; margin: -2px 0 0; color: #c3cfce; font-size: .96rem; font-variant-numeric: tabular-nums; }
+    .frequency small { color: var(--muted); font-size: .78rem; }
+
+    .meter-area { padding: 5px 18px 0; }
+    .meter-labels { display: flex; justify-content: space-between; margin: 0 10px 12px; color: var(--muted); font-size: .68rem; font-variant-numeric: tabular-nums; }
+    .meter {
+      position: relative;
+      height: 34px;
+      overflow: visible;
+      border: 1px solid rgba(145, 161, 159, .2);
+      border-radius: 7px;
+      background:
+        linear-gradient(90deg, transparent 49.8%, rgba(121, 225, 189, .55) 49.8%, rgba(121, 225, 189, .55) 50.2%, transparent 50.2%),
+        repeating-linear-gradient(90deg, transparent 0, transparent calc(10% - 1px), rgba(145, 161, 159, .18) calc(10% - 1px), rgba(145, 161, 159, .18) 10%),
+        rgba(6, 10, 14, .5);
+    }
+    .meter::before { position: absolute; inset: 0 47%; background: rgba(121, 225, 189, .07); content: ""; }
+    .needle {
+      position: absolute;
+      z-index: 1;
+      top: -6px;
+      left: 50%;
+      width: 2px;
+      height: 44px;
+      border-radius: 2px;
+      background: #f5faf8;
+      box-shadow: 0 0 9px rgba(245, 250, 248, .5);
+      transform: translateX(-50%);
+      transition: left 90ms ease-out, background-color 120ms ease;
+    }
+    .needle.tuned { background: var(--mint); box-shadow: 0 0 10px rgba(121, 225, 189, .8); }
+
+    .cents { min-height: 23px; margin: 16px 0 0; color: #c5d0cf; font-size: .9rem; font-variant-numeric: tabular-nums; }
+    .cents.tuned, .message.tuned { color: var(--mint); }
+    .cents.off { color: var(--amber); }
+    .message { min-height: 20px; margin: 6px 0 0; color: var(--muted); font-size: .75rem; }
+
+    .controls {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: center;
+      gap: 20px;
+      padding: 20px 24px;
+      border-top: 1px solid var(--line);
+      background: rgba(5, 9, 13, .22);
+    }
+
+    .control-label { display: block; margin-bottom: 9px; color: var(--muted); font-size: .69rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+    .pitch-control { display: flex; align-items: center; gap: 12px; }
+    input[type="range"] { width: min(200px, 34vw); accent-color: var(--mint); }
+    output { min-width: 62px; color: #edf4f3; font-size: .84rem; font-variant-numeric: tabular-nums; }
+    .instrument-control { margin-top: 16px; }
+    .instrument-control select {
+      width: min(100%, 300px);
+      min-height: 40px;
+      padding: 0 10px;
+      border: 1px solid var(--line);
+      border-radius: 9px;
+      background: #0b1016;
+      color: #eef4f3;
+    }
+
+    button {
+      min-width: 150px;
+      min-height: 48px;
+      padding: 0 18px;
+      border: 1px solid rgba(121, 225, 189, .4);
+      border-radius: 12px;
+      background: var(--mint);
+      color: #0b1713;
+      font-size: .74rem;
+      font-weight: 850;
+      letter-spacing: .09em;
+      cursor: pointer;
+    }
+    button:hover { filter: brightness(1.07); }
+    button:disabled { cursor: wait; opacity: .72; }
+    button.stop { border-color: var(--line); background: #202b33; color: #eef4f3; }
+    button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid white; outline-offset: 3px; }
+
+    .error { display: none; margin: 16px 4px 0; color: #f28a8a; font-size: .8rem; line-height: 1.5; text-align: center; }
+    .error.show { display: block; }
+    .tip, footer { color: var(--muted); text-align: center; line-height: 1.6; }
+    .tip { margin: 17px 5px 0; font-size: .78rem; }
+    footer { margin: 14px 5px 0; color: #71817f; font-size: .68rem; }
+
+    .metronome {
+      margin-top: 16px;
+      padding: 21px 24px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: linear-gradient(155deg, #17212a, #111820 76%);
+      box-shadow: 0 16px 48px rgba(0, 0, 0, .2);
+    }
+    .metronome-heading { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+    .metronome h2 { margin: 0; font-size: .82rem; letter-spacing: .12em; }
+    .tempo-readout { color: var(--mint); font-size: .78rem; font-variant-numeric: tabular-nums; }
+    .tempo-control { display: flex; align-items: center; gap: 12px; margin-top: 16px; }
+    .tempo-control input[type="range"] { flex: 1; width: auto; }
+    .tempo-control input[type="number"] {
+      width: 76px;
+      min-height: 38px;
+      padding: 0 8px;
+      border: 1px solid var(--line);
+      border-radius: 9px;
+      background: #0b1016;
+      color: #eef4f3;
+      font-variant-numeric: tabular-nums;
+    }
+    .beat-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 16px; }
+    .beats { display: flex; gap: 9px; }
+    .beat {
+      width: 10px;
+      height: 10px;
+      border: 1px solid #53615f;
+      border-radius: 50%;
+      background: #29363b;
+      transition: background-color 60ms ease, box-shadow 60ms ease, transform 60ms ease;
+    }
+    .beat:first-child { border-color: rgba(243, 196, 119, .55); }
+    .beat.active { transform: scale(1.25); border-color: var(--mint); background: var(--mint); box-shadow: 0 0 12px rgba(121, 225, 189, .7); }
+    .beat:first-child.active { border-color: var(--amber); background: var(--amber); box-shadow: 0 0 12px rgba(243, 196, 119, .7); }
+    .beat-count { color: var(--muted); font-size: .74rem; font-variant-numeric: tabular-nums; }
+    .metronome button { min-width: 126px; min-height: 42px; }
+
+    @media (max-width: 480px) {
+      body { padding: 18px 13px; }
+      .readout { padding: 24px 15px 22px; }
+      .note { min-height: 104px; }
+      .controls { grid-template-columns: 1fr; gap: 18px; padding: 18px; }
+      .pitch-control { justify-content: space-between; }
+      input[type="range"] { flex: 1; width: auto; }
+      button { width: 100%; }
+      .metronome { padding: 19px 18px; }
+      .beat-row { align-items: stretch; flex-direction: column; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { transition-duration: .01ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">♩</div>
+        <div>
+          <h1>Band Stuff</h1>
+          <p class="tagline">Chromatic tuner for band</p>
+        </div>
+      </div>
+      <div class="mic-state" id="micState" aria-live="polite">
+        <span class="dot" aria-hidden="true"></span><span id="micLabel">MIC OFF</span>
+      </div>
+    </header>
+
+    <section class="tuner" aria-label="Instrument tuner">
+      <div class="readout" aria-live="polite" aria-atomic="true">
+        <p class="overline" id="overline">Play a note to begin</p>
+        <div class="note" id="note">—</div>
+        <p class="frequency" id="frequency">-- <small>Hz</small></p>
+        <div class="meter-area">
+          <div class="meter-labels" aria-hidden="true"><span>♭ &nbsp;−50</span><span>IN TUNE</span><span>+50 &nbsp;♯</span></div>
+          <div class="meter" role="img" aria-label="Pitch deviation from the nearest note">
+            <div class="needle" id="needle"></div>
+          </div>
+          <p class="cents" id="cents">— cents</p>
+          <p class="message" id="message">Tune one instrument at a time for the clearest reading.</p>
+        </div>
+      </div>
+      <div class="controls">
+        <div>
+          <label class="control-label" for="concertPitch">Concert pitch · A4</label>
+          <div class="pitch-control">
+            <input id="concertPitch" type="range" min="430" max="450" step="1" value="440">
+            <output id="pitchValue" for="concertPitch">440 Hz</output>
+          </div>
+          <div class="instrument-control">
+            <label class="control-label" for="instrument">Instrument</label>
+            <select id="instrument">
+              <option value="" selected disabled>Select your instrument</option>
+              <optgroup label="Woodwinds">
+                <option value="flute">Flute</option>
+                <option value="oboe">Oboe</option>
+                <option value="clarinet">Clarinet</option>
+                <option value="bassClarinet">Bass clarinet</option>
+                <option value="bassoon">Bassoon</option>
+                <option value="altoSaxophone">Alto saxophone</option>
+                <option value="tenorSaxophone">Tenor saxophone</option>
+                <option value="baritoneSaxophone">Baritone saxophone</option>
+              </optgroup>
+              <optgroup label="Brass">
+                <option value="trumpet">Trumpet</option>
+                <option value="frenchHorn">French horn</option>
+                <option value="trombone">Trombone</option>
+                <option value="euphonium">Euphonium</option>
+                <option value="tuba">Tuba</option>
+              </optgroup>
+              <option value="percussion">Percussion</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+        </div>
+        <button id="toggle" type="button">Start tuning</button>
+      </div>
+    </section>
+
+    <section class="metronome" aria-labelledby="metronomeTitle">
+      <div class="metronome-heading">
+        <h2 id="metronomeTitle">METRONOME</h2>
+        <span class="tempo-readout" id="tempoReadout">120 BPM</span>
+      </div>
+      <div class="tempo-control">
+        <label class="control-label" for="tempoSlider">Tempo</label>
+        <input id="tempoSlider" type="range" min="40" max="10000" step="1" value="120">
+        <input id="tempoInput" type="number" min="40" max="10000" step="1" value="120" aria-label="Tempo in beats per minute">
+      </div>
+      <div class="beat-row">
+        <div class="beats" id="beats" aria-hidden="true">
+          <span class="beat"></span><span class="beat"></span><span class="beat"></span><span class="beat"></span>
+        </div>
+        <span class="beat-count" id="beatCount">Stopped · 4/4</span>
+        <button id="metronomeToggle" type="button">Start metronome</button>
+      </div>
+    </section>
+
+    <p class="error" id="error" role="alert"></p>
+    <p class="tip" id="instrumentTip" aria-live="polite">Choose your instrument for tailored tuning tips. For a clear reading, play one steady note in a quiet space.</p>
+    <footer>Audio is analyzed on your device. It is not recorded or uploaded. Microphone access requires HTTPS or localhost.</footer>
+  </main>
+
+  <script>
+    "use strict";
+
+    const noteNames = ["C", "C♯", "D", "D♯", "E", "F", "F♯", "G", "G♯", "A", "A♯", "B"];
+    const $ = (id) => document.getElementById(id);
+    const ui = {
+      note: $("note"),
+      frequency: $("frequency"),
+      cents: $("cents"),
+      message: $("message"),
+      overline: $("overline"),
+      needle: $("needle"),
+      error: $("error"),
+      toggle: $("toggle"),
+      micState: $("micState"),
+      micLabel: $("micLabel"),
+      concertPitch: $("concertPitch"),
+      pitchValue: $("pitchValue"),
+      instrument: $("instrument"),
+      instrumentTip: $("instrumentTip"),
+      tempoSlider: $("tempoSlider"),
+      tempoInput: $("tempoInput"),
+      tempoReadout: $("tempoReadout"),
+      beatCount: $("beatCount"),
+      beats: $("beats"),
+      metronomeToggle: $("metronomeToggle")
+    };
+
+    let audioContext = null;
+    let stream = null;
+    let analyser = null;
+    let samples = null;
+    let frameId = 0;
+    let lastFrameTime = 0;
+    let history = [];
+    let metronomeContext = null;
+    let metronomeTimer = 0;
+    let beatVisualTimer = 0;
+    let nextBeatTime = 0;
+    let beatNumber = 0;
+    let metronomeRunning = false;
+    let metronomeGeneration = 0;
+
+    function showError(text) {
+      ui.error.textContent = text;
+      ui.error.classList.add("show");
+    }
+
+    function setTempo(value) {
+      const tempo = Math.max(40, Math.min(10000, Math.round(value)));
+      ui.tempoSlider.value = tempo;
+      ui.tempoInput.value = tempo;
+      ui.tempoReadout.textContent = `${tempo} BPM`;
+    }
+
+    const instrumentTips = {
+      flute: "Flute: aim a steady stream of air across the embouchure hole, and keep the instrument warmed up for a stable reading.",
+      oboe: "Oboe: use a warmed, responsive reed and steady air support; a dry or stiff reed can make pitch unstable.",
+      clarinet: "Clarinet: warm up the instrument and keep the reed aligned and secure; check notes in the register you will play.",
+      bassClarinet: "Bass clarinet: warm up the instrument, use relaxed steady air, and check pitch in the register you will play.",
+      bassoon: "Bassoon: warm up the instrument and reed, then use steady supported air for a stable pitch.",
+      altoSaxophone: "Alto saxophone: warm up the instrument and reed, and use steady air without biting down on the mouthpiece.",
+      tenorSaxophone: "Tenor saxophone: warm up the instrument and reed, and use steady air without biting down on the mouthpiece.",
+      baritoneSaxophone: "Baritone saxophone: warm up the instrument and reed, and use steady air without biting down on the mouthpiece.",
+      trumpet: "Trumpet: warm up with relaxed long tones and steady air; avoid pressing the mouthpiece hard against your lips.",
+      frenchHorn: "French horn: warm up with relaxed long tones and supported air; listen carefully for centered pitch.",
+      trombone: "Trombone: warm up with long tones, keep the slide moving freely, and check that it is in tune in the position you are using.",
+      euphonium: "Euphonium: warm up with relaxed long tones and steady air; avoid forcing the pitch with your embouchure.",
+      tuba: "Tuba: warm up with relaxed long tones and deep, steady air; give the instrument time to settle before tuning.",
+      percussion: "Percussion: this tuner needs a sustained pitched note. Try a mallet instrument or another pitched instrument; most drums are unpitched.",
+      other: "Ya I don't know why you chose this instrument little bro."
+    };
+
+    function updateInstrumentTip() {
+      ui.instrumentTip.textContent = instrumentTips[ui.instrument.value]
+        || "Choose your instrument for tailored tuning tips. For a clear reading, play one steady note in a quiet space.";
+    }
+
+    function playMetronomeBeat(time, beat, generation) {
+      const accent = beat === 0;
+      const duration = Math.min(0.055, 60 / Number(ui.tempoSlider.value) * 0.8);
+      const attack = Math.min(0.004, duration * 0.15);
+      const oscillator = metronomeContext.createOscillator();
+      const gain = metronomeContext.createGain();
+      oscillator.type = "sine";
+      oscillator.frequency.setValueAtTime(accent ? 1320 : 880, time);
+      gain.gain.setValueAtTime(0.0001, time);
+      gain.gain.exponentialRampToValueAtTime(accent ? 0.65 : 0.38, time + attack);
+      gain.gain.exponentialRampToValueAtTime(0.0001, time + duration);
+      oscillator.connect(gain);
+      gain.connect(metronomeContext.destination);
+      oscillator.start(time);
+      oscillator.stop(time + duration);
+
+      const delay = Math.max(0, (time - metronomeContext.currentTime) * 1000);
+      beatVisualTimer = window.setTimeout(() => {
+        if (!metronomeRunning || generation !== metronomeGeneration) return;
+        Array.from(ui.beats.children).forEach((element, index) => {
+          element.classList.toggle("active", index === beat);
+        });
+        ui.beatCount.textContent = `Beat ${beat + 1} of 4 · 4/4`;
+      }, delay);
+    }
+
+    function scheduleMetronome(generation) {
+      if (!metronomeRunning || !metronomeContext || generation !== metronomeGeneration) return;
+      while (nextBeatTime < metronomeContext.currentTime + 0.1) {
+        playMetronomeBeat(nextBeatTime, beatNumber, generation);
+        nextBeatTime += 60 / Number(ui.tempoSlider.value);
+        beatNumber = (beatNumber + 1) % 4;
+      }
+      metronomeTimer = window.setTimeout(() => scheduleMetronome(generation), 25);
+    }
+
+    async function stopMetronome() {
+      metronomeRunning = false;
+      metronomeGeneration++;
+      window.clearTimeout(metronomeTimer);
+      window.clearTimeout(beatVisualTimer);
+      metronomeTimer = 0;
+      beatVisualTimer = 0;
+      if (metronomeContext && metronomeContext.state !== "closed") await metronomeContext.close();
+      metronomeContext = null;
+      ui.metronomeToggle.textContent = "Start metronome";
+      ui.metronomeToggle.classList.remove("stop");
+      ui.beatCount.textContent = "Stopped · 4/4";
+      Array.from(ui.beats.children).forEach((element) => element.classList.remove("active"));
+    }
+
+    async function startMetronome() {
+      ui.error.textContent = "";
+      ui.error.classList.remove("show");
+      const Context = window.AudioContext || window.webkitAudioContext;
+      if (!Context) {
+        showError("This browser does not support audio playback for the metronome.");
+        return;
+      }
+
+      ui.metronomeToggle.disabled = true;
+      try {
+        metronomeContext = new Context({ latencyHint: "interactive" });
+        if (metronomeContext.state === "suspended") await metronomeContext.resume();
+        metronomeRunning = true;
+        beatNumber = 0;
+        nextBeatTime = metronomeContext.currentTime + 0.05;
+        metronomeGeneration++;
+        ui.metronomeToggle.textContent = "Stop metronome";
+        ui.metronomeToggle.classList.add("stop");
+        scheduleMetronome(metronomeGeneration);
+      } catch (error) {
+        await stopMetronome();
+        showError(error.message || "The metronome could not be started. Check your browser audio settings and try again.");
+      } finally {
+        ui.metronomeToggle.disabled = false;
+      }
+    }
+
+    function resetReadout() {
+      ui.note.textContent = "—";
+      ui.frequency.innerHTML = '-- <small>Hz</small>';
+      ui.cents.textContent = "— cents";
+      ui.cents.className = "cents";
+      ui.message.textContent = "Tune one instrument at a time for the clearest reading.";
+      ui.message.className = "message";
+      ui.overline.textContent = "Play a note to begin";
+      ui.needle.style.left = "50%";
+      ui.needle.classList.remove("tuned");
+      history = [];
+    }
+
+    function median(values) {
+      const sorted = values.slice().sort((a, b) => a - b);
+      return sorted[Math.floor(sorted.length / 2)];
+    }
+
+    function detectPitch(input, sampleRate) {
+      let energy = 0;
+      for (let i = 0; i < input.length; i++) energy += input[i] * input[i];
+      if (Math.sqrt(energy / input.length) < 0.006) return null;
+
+      const signal = new Float32Array(input.length >> 1);
+      for (let i = 0; i < signal.length; i++) {
+        signal[i] = (input[i * 2] + input[i * 2 + 1]) * 0.5;
+      }
+
+      const rate = sampleRate * 0.5;
+      const minTau = Math.max(2, Math.floor(rate / 1500));
+      const maxTau = Math.min(Math.ceil(rate / 25), signal.length >> 1);
+      const compareLength = signal.length - maxTau;
+      const difference = new Float64Array(maxTau + 1);
+      const normalized = new Float64Array(maxTau + 1);
+
+      for (let tau = minTau; tau <= maxTau; tau++) {
+        let sum = 0;
+        for (let i = 0; i < compareLength; i++) {
+          const delta = signal[i] - signal[i + tau];
+          sum += delta * delta;
+        }
+        difference[tau] = sum;
+      }
+
+      let cumulative = 0;
+      for (let tau = 1; tau <= maxTau; tau++) {
+        cumulative += difference[tau];
+        normalized[tau] = cumulative === 0 ? 1 : difference[tau] * tau / cumulative;
+      }
+
+      let period = -1;
+      for (let tau = minTau + 1; tau < maxTau; tau++) {
+        if (normalized[tau] < 0.12 && normalized[tau] <= normalized[tau + 1]) {
+          period = tau;
+          while (period + 1 < maxTau && normalized[period + 1] < normalized[period]) period++;
+          break;
+        }
+      }
+
+      if (period < 0) {
+        let best = 0.22;
+        for (let tau = minTau + 1; tau <= maxTau; tau++) {
+          if (normalized[tau] < best) {
+            best = normalized[tau];
+            period = tau;
+          }
+        }
+      }
+      if (period < 0) return null;
+
+      const left = normalized[period - 1];
+      const center = normalized[period];
+      const right = normalized[Math.min(period + 1, maxTau)];
+      const curvature = left - 2 * center + right;
+      const correction = curvature === 0 ? 0 : 0.5 * (left - right) / curvature;
+      const refinedPeriod = period + Math.max(-1, Math.min(1, correction));
+      const confidence = 1 - center;
+      const frequency = rate / refinedPeriod;
+      if (confidence < 0.78 || frequency < 25 || frequency > 1500) return null;
+      return frequency;
+    }
+
+    function displayPitch(frequency) {
+      const reference = Number(ui.concertPitch.value);
+      const midi = Math.round(69 + 12 * Math.log2(frequency / reference));
+      const target = reference * Math.pow(2, (midi - 69) / 12);
+      const cents = 1200 * Math.log2(frequency / target);
+      const note = noteNames[(midi % 12 + 12) % 12];
+      const octave = Math.floor(midi / 12) - 1;
+      const inTune = Math.abs(cents) <= 3;
+
+      ui.note.innerHTML = `${note}<sup>${octave}</sup>`;
+      ui.frequency.innerHTML = `${frequency.toFixed(2)} <small>Hz</small>`;
+      ui.cents.textContent = `${cents > 0 ? "+" : ""}${cents.toFixed(1)} cents`;
+      ui.cents.className = `cents ${inTune ? "tuned" : "off"}`;
+      ui.message.textContent = inTune ? "In tune" : cents > 0 ? "Sharp — tune down" : "Flat — tune up";
+      ui.message.className = `message${inTune ? " tuned" : ""}`;
+      ui.overline.textContent = "Nearest note";
+      ui.needle.style.left = `${Math.max(0, Math.min(100, 50 + cents))}%`;
+      ui.needle.classList.toggle("tuned", inTune);
+    }
+
+    function analyze(now) {
+      if (!analyser || !audioContext || !samples) return;
+      frameId = requestAnimationFrame(analyze);
+      if (now - lastFrameTime < 45) return;
+      lastFrameTime = now;
+      analyser.getFloatTimeDomainData(samples);
+
+      const frequency = detectPitch(samples, audioContext.sampleRate);
+      if (frequency === null) {
+        if (history.length) {
+          history = [];
+          resetReadout();
+          ui.overline.textContent = "Listening for a clear note";
+        }
+        return;
+      }
+
+      history.push(frequency);
+      if (history.length > 5) history.shift();
+      if (history.length >= 3) displayPitch(median(history));
+    }
+
+    async function stopTuning() {
+      cancelAnimationFrame(frameId);
+      frameId = 0;
+      if (stream) {
+        stream.getTracks().forEach((track) => track.stop());
+        stream = null;
+      }
+      if (audioContext && audioContext.state !== "closed") await audioContext.close();
+      audioContext = null;
+      analyser = null;
+      samples = null;
+      ui.toggle.textContent = "Start tuning";
+      ui.toggle.classList.remove("stop");
+      ui.micState.classList.remove("on");
+      ui.micLabel.textContent = "MIC OFF";
+      resetReadout();
+    }
+
+    async function startTuning() {
+      ui.error.textContent = "";
+      ui.error.classList.remove("show");
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        showError("Microphone access requires a secure connection. Open this page on HTTPS or localhost.");
+        return;
+      }
+
+      ui.toggle.disabled = true;
+      ui.toggle.textContent = "Connecting…";
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          audio: {
+            channelCount: 1,
+            echoCancellation: false,
+            noiseSuppression: false,
+            autoGainControl: false
+          }
+        });
+        const Context = window.AudioContext || window.webkitAudioContext;
+        if (!Context) throw new Error("This browser does not support live audio analysis.");
+        audioContext = new Context({ latencyHint: "interactive" });
+        if (audioContext.state === "suspended") await audioContext.resume();
+
+        analyser = audioContext.createAnalyser();
+        analyser.fftSize = 8192;
+        analyser.smoothingTimeConstant = 0;
+        audioContext.createMediaStreamSource(stream).connect(analyser);
+        samples = new Float32Array(analyser.fftSize);
+        history = [];
+        lastFrameTime = 0;
+        ui.toggle.textContent = "Stop tuning";
+        ui.toggle.classList.add("stop");
+        ui.micState.classList.add("on");
+        ui.micLabel.textContent = "LISTENING";
+        ui.overline.textContent = "Play a note to begin";
+        ui.message.textContent = "Listening for a clear note…";
+        frameId = requestAnimationFrame(analyze);
+      } catch (error) {
+        await stopTuning();
+        if (error.name === "NotAllowedError" || error.name === "SecurityError") {
+          showError("Microphone permission was denied. Allow microphone access in browser settings, then try again.");
+        } else if (error.name === "NotFoundError" || error.name === "DevicesNotFoundError") {
+          showError("No microphone was found. Connect a microphone and try again.");
+        } else {
+          showError(error.message || "The microphone could not be started. Check your browser and try again.");
+        }
+      } finally {
+        ui.toggle.disabled = false;
+      }
+    }
+
+    ui.toggle.addEventListener("click", () => {
+      if (stream) {
+        stopTuning().catch((error) => showError(`Could not stop audio cleanly: ${error.message}`));
+      } else {
+        startTuning();
+      }
+    });
+
+    ui.concertPitch.addEventListener("input", () => {
+      ui.pitchValue.value = `${ui.concertPitch.value} Hz`;
+      ui.pitchValue.textContent = `${ui.concertPitch.value} Hz`;
+    });
+
+    ui.instrument.addEventListener("change", updateInstrumentTip);
+    ui.tempoSlider.addEventListener("input", () => setTempo(Number(ui.tempoSlider.value)));
+    ui.tempoInput.addEventListener("change", () => {
+      const tempo = Number(ui.tempoInput.value);
+      if (Number.isFinite(tempo)) setTempo(tempo);
+      else setTempo(Number(ui.tempoSlider.value));
+    });
+    ui.metronomeToggle.addEventListener("click", () => {
+      if (metronomeRunning) {
+        stopMetronome().catch((error) => showError(`Could not stop the metronome cleanly: ${error.message}`));
+      } else {
+        startMetronome();
+      }
+    });
+  </script>
+</body>
+</html>
